@@ -9,7 +9,7 @@ const program = new Command();
 
 program
   .name('claude-stats')
-  .description('Claude AI usage statistics')
+  .description('Harness Analyzer usage telemetry')
   .version('0.1.0');
 
 function getResult() {
@@ -22,7 +22,7 @@ program
   .description('Show usage summary (today, week, month, all-time)')
   .action(() => {
     const { summary } = getResult();
-    console.log(chalk.bold('\nClaude Usage Summary\n'));
+    console.log(chalk.bold('\nHarness Analyzer Summary\n'));
     console.log(createSummaryTable({
       today: summary.today_cost,
       week: summary.week_cost,
@@ -43,7 +43,7 @@ program
     const todaySessions = sessions
       .filter(s => s.date === summary.today)
       .sort((a, b) => a.time.localeCompare(b.time));
-    console.log(chalk.bold(`\nToday (${summary.today}) — ${chalk.yellow('$' + summary.today_cost.toFixed(2))}\n`));
+    console.log(chalk.bold(`\nToday (${summary.today}) - ${chalk.yellow('$' + summary.today_cost.toFixed(2))}\n`));
     if (todaySessions.length === 0) {
       console.log(chalk.gray('No sessions today.'));
     } else {
@@ -67,7 +67,7 @@ program
     const weekSessions = sessions
       .filter(s => s.date >= mondayStr)
       .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-    console.log(chalk.bold(`\nThis Week (${mondayStr} — ${summary.today}) — ${chalk.yellow('$' + summary.week_cost.toFixed(2))}\n`));
+    console.log(chalk.bold(`\nThis Week (${mondayStr} - ${summary.today}) - ${chalk.yellow('$' + summary.week_cost.toFixed(2))}\n`));
     if (weekSessions.length === 0) {
       console.log(chalk.gray('No sessions this week.'));
     } else {
@@ -87,7 +87,7 @@ program
     const monthSessions = sessions
       .filter(s => s.date.startsWith(summary.current_month))
       .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-    console.log(chalk.bold(`\nThis Month (${summary.current_month}) — ${chalk.yellow('$' + summary.month_cost.toFixed(2))}\n`));
+    console.log(chalk.bold(`\nThis Month (${summary.current_month}) - ${chalk.yellow('$' + summary.month_cost.toFixed(2))}\n`));
 
     // Group by date
     const byDate: Record<string, Session[]> = {};
