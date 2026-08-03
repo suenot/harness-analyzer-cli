@@ -14,7 +14,7 @@ const session = {
   hours: { 10: { cost: 1.25, input_tokens: 100, output_tokens: 20, cache_read: 50, cache_write: 10 } },
 };
 
-test('sync uploads only an aggregate snapshot', async () => {
+test('sync uploads a private redacted snapshot to the owner endpoint', async () => {
   const calls = [];
   const fetcher = async (url, init = {}) => {
     calls.push({ url, init });
@@ -34,7 +34,9 @@ test('sync uploads only an aggregate snapshot', async () => {
   for (const secret of ['/secret/file.jsonl', '/secret/project', 'secret prompt', 'secret title']) {
     assert.equal(body.includes(secret), false, `leaked ${secret}`);
   }
-  assert.equal(JSON.parse(body).totals.total_tokens, 180);
+  assert.equal(calls[1].url.endsWith('/me/analytics'), true);
+  assert.equal(JSON.parse(body).sessions[0].file, 'remote');
+  assert.equal(JSON.parse(body).sessions[0].cost, 1.25);
 });
 
 test('dry run makes no network request', async () => {

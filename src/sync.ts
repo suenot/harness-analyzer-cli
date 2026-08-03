@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { buildPublicSnapshot, collect, type CollectorResult, type PublicSnapshotV1 } from '@claude-stats/core';
+import { buildPrivateAnalyticsSnapshot, buildPublicSnapshot, collect, type CollectorResult, type PrivateAnalyticsSnapshotV1, type PublicSnapshotV1 } from '@claude-stats/core';
 
 export const DEFAULT_API_URL = 'https://harness-analyzer-api.marketmaker.cc/api';
 
@@ -15,6 +15,7 @@ export interface SyncResult {
   handle: string;
   level: 'totals' | 'details';
   snapshot: PublicSnapshotV1;
+  privateSnapshot: PrivateAnalyticsSnapshotV1;
   sourceResults: Record<string, number>;
   uploaded: boolean;
 }
@@ -99,6 +100,7 @@ export async function syncUsage(options: {
   dryRun?: boolean;
   fetcher?: typeof fetch;
   collector?: () => CollectorResult;
+  includeHistory?: boolean;
 } = {}): Promise<SyncResult> {
   const collectorResult = (options.collector || (() => collect({ verbose: false })))();
   let sharing: SharingSettings = { handle: '', visibility: 'details', snapshot_generated_at: null };
@@ -108,13 +110,14 @@ export async function syncUsage(options: {
     sharing = await getSyncStatus({ token, apiUrl: options.apiUrl, fetcher: options.fetcher });
   }
   const level = options.level || (sharing.visibility === 'totals' ? 'totals' : 'details');
-  const snapshot = buildPublicSnapshot(collectorResult.sessions, level);
+  const privateSnapshot = buildPrivateAnalyticsSnapshot(collectorResult.sessions, options.includeHistory);
+  const snapshot = buildPublicSnapshot(privateSnapshot.sessions, level);
   if (!options.dryRun) {
     await apiRequest(
       token!,
       options.apiUrl || DEFAULT_API_URL,
-      '/me/public-snapshot',
-      { method: 'PUT', body: JSON.stringify(snapshot) },
+      '/me/analytics',
+      { method: 'PUT', body: JSON.stringify(privateSnapshot) },
       options.fetcher,
     );
   }
@@ -122,6 +125,7 @@ export async function syncUsage(options: {
     handle: sharing.handle,
     level,
     snapshot,
+    privateSnapshot,
     sourceResults: collectorResult.sourceResults,
     uploaded: !options.dryRun,
   };

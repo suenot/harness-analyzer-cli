@@ -5,13 +5,14 @@ import { collect } from '@claude-stats/core';
 import type { Session } from '@claude-stats/core';
 import { createSummaryTable, createSessionsTable, createSourceTable, createProjectsTable } from './ui/table.js';
 import { DEFAULT_API_URL, getSyncStatus, loadSyncToken, removeSyncToken, saveSyncToken, syncUsage } from './sync.js';
+import { backgroundSyncStatus, startBackgroundSync, stopBackgroundSync } from './background.js';
 
 const program = new Command();
 
 program
   .name('harness-analyzer')
   .description('Harness Analyzer usage telemetry')
-  .version('0.2.0');
+  .version('0.3.0');
 
 function readHiddenToken(): Promise<string> {
   if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== 'function') {
@@ -72,23 +73,37 @@ program
 
 program
   .command('sync')
-  .description('Collect local usage and upload aggregate statistics')
+  .description('Collect local usage and upload private owner analytics plus a safe public aggregate')
   .option('--level <level>', 'Snapshot detail level: totals or details')
   .option('--dry-run', 'Collect and validate without uploading')
   .option('--json', 'Print the result as JSON')
+  .option('--include-history', 'Also upload session prompt history (off by default)')
+  .option('--quiet', 'Suppress successful output; for launchd')
   .option('--api-url <url>', 'Override the hosted API URL', DEFAULT_API_URL)
   .action(async opts => {
     if (opts.level && !['totals', 'details'].includes(opts.level)) throw new Error('Level must be totals or details.');
-    const result = await syncUsage({ apiUrl: opts.apiUrl, level: opts.level, dryRun: opts.dryRun });
+    const result = await syncUsage({ apiUrl: opts.apiUrl, level: opts.level, dryRun: opts.dryRun, includeHistory: opts.includeHistory });
     if (opts.json) {
       console.log(JSON.stringify(result, null, 2));
       return;
     }
+    if (opts.quiet) return;
     const totals = result.snapshot.totals;
     console.log(chalk.bold(result.uploaded ? '\nSync complete\n' : '\nDry run complete\n'));
     console.log(`${totals.total_sessions} sessions · ${totals.total_tokens.toLocaleString()} tokens · $${totals.total_cost.toFixed(2)}`);
     if (result.uploaded) console.log(chalk.gray(`https://harness-analyzer.marketmaker.cc/u/${result.handle}`));
   });
+
+const background = program.command('background').description('Manage periodic private analytics sync on this Mac');
+background.command('start').option('--interval <minutes>', 'Sync interval in minutes', '15').action(opts => {
+  const file = startBackgroundSync(Number(opts.interval));
+  console.log(`Background sync started every ${opts.interval} minutes. ${file}`);
+});
+background.command('stop').action(() => console.log(stopBackgroundSync() ? 'Background sync stopped.' : 'Background sync is not installed.'));
+background.command('status').action(() => {
+  const status = backgroundSyncStatus();
+  console.log(status.installed ? `Background sync installed: ${status.path}` : 'Background sync is not installed.');
+});
 
 program
   .command('status')
@@ -105,6 +120,7 @@ program
   .command('logout')
   .description('Remove the sync token stored on this computer')
   .action(() => {
+    if (backgroundSyncStatus().installed && process.platform === 'darwin') stopBackgroundSync();
     console.log(removeSyncToken() ? 'Local sync token removed.' : 'No local sync token found.');
   });
 
