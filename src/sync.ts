@@ -1,9 +1,17 @@
 import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
-import { buildPrivateAnalyticsSnapshot, buildPublicSnapshot, collect, type CollectorResult, type PrivateAnalyticsSnapshotV1, type PublicSnapshotV1 } from '@claude-stats/core';
+import { buildPrivateAnalyticsSnapshot, buildPublicSnapshot, collect, type AnalyticsDeviceMetadata, type CollectorResult, type PrivateAnalyticsSnapshotV1, type PublicSnapshotV1 } from '@claude-stats/core';
 
 export const DEFAULT_API_URL = 'https://harness-analyzer-api.marketmaker.cc/api';
+
+export type DeviceMetadata = AnalyticsDeviceMetadata;
+
+interface StoredDeviceIdentity {
+  id: string;
+  name: string;
+}
 
 interface SharingSettings {
   handle: string;
@@ -27,9 +35,74 @@ export class SyncApiError extends Error {
   }
 }
 
-function credentialsPath(): string {
+function configDirectory(): string {
   const configRoot = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-  return path.join(configRoot, 'harness-analyzer', 'credentials.json');
+  return path.join(configRoot, 'harness-analyzer');
+}
+
+function credentialsPath(): string {
+  return path.join(configDirectory(), 'credentials.json');
+}
+
+function deviceIdentityPath(): string {
+  return path.join(configDirectory(), 'device.json');
+}
+
+export function validateDeviceName(value: string): string {
+  const name = value.trim();
+  if (name.length < 1 || name.length > 80 || /[\u0000-\u001f\u007f-\u009f]/u.test(name)) {
+    throw new Error('Device name must be 1-80 characters without control characters.');
+  }
+  return name;
+}
+
+function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function readDeviceIdentity(): StoredDeviceIdentity | null {
+  try {
+    const value = JSON.parse(fs.readFileSync(deviceIdentityPath(), 'utf8')) as { id?: unknown; name?: unknown };
+    if (!isUuid(value.id) || typeof value.name !== 'string') return null;
+    return { id: value.id, name: validateDeviceName(value.name) };
+  } catch {
+    return null;
+  }
+}
+
+function saveDeviceIdentity(identity: StoredDeviceIdentity): void {
+  const directory = configDirectory();
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  const file = deviceIdentityPath();
+  fs.writeFileSync(file, JSON.stringify(identity, null, 2) + '\n', { mode: 0o600 });
+  fs.chmodSync(file, 0o600);
+}
+
+export function getDeviceMetadata(options: { deviceName?: string } = {}): DeviceMetadata {
+  let identity = readDeviceIdentity();
+  if (!identity) {
+    const id = randomUUID();
+    const hostname = os.hostname().trim().slice(0, 80) || `device-${id.slice(0, 8)}`;
+    identity = { id, name: validateDeviceName(hostname) };
+    saveDeviceIdentity(identity);
+  }
+
+  let name = identity.name;
+  if (process.env.HARNESS_ANALYZER_DEVICE_NAME !== undefined) {
+    name = validateDeviceName(process.env.HARNESS_ANALYZER_DEVICE_NAME);
+  }
+  if (options.deviceName !== undefined) {
+    name = validateDeviceName(options.deviceName);
+    identity = { ...identity, name };
+    saveDeviceIdentity(identity);
+  }
+
+  return {
+    id: identity.id,
+    name,
+    platform: process.platform,
+    architecture: process.arch,
+  };
 }
 
 export function loadSyncToken(): string | null {
@@ -101,6 +174,7 @@ export async function syncUsage(options: {
   fetcher?: typeof fetch;
   collector?: () => CollectorResult;
   includeHistory?: boolean;
+  deviceName?: string;
 } = {}): Promise<SyncResult> {
   const collectorResult = (options.collector || (() => collect({ verbose: false })))();
   let sharing: SharingSettings = { handle: '', visibility: 'details', snapshot_generated_at: null };
@@ -110,7 +184,8 @@ export async function syncUsage(options: {
     sharing = await getSyncStatus({ token, apiUrl: options.apiUrl, fetcher: options.fetcher });
   }
   const level = options.level || (sharing.visibility === 'totals' ? 'totals' : 'details');
-  const privateSnapshot = buildPrivateAnalyticsSnapshot(collectorResult.sessions, options.includeHistory);
+  const device = getDeviceMetadata({ deviceName: options.deviceName });
+  const privateSnapshot = buildPrivateAnalyticsSnapshot(collectorResult.sessions, options.includeHistory, device);
   const snapshot = buildPublicSnapshot(privateSnapshot.sessions, level);
   if (!options.dryRun) {
     await apiRequest(

@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { createRequire } from 'node:module';
 import chalk from 'chalk';
 import { collect } from '@claude-stats/core';
 import type { Session } from '@claude-stats/core';
 import { createSummaryTable, createSessionsTable, createSourceTable, createProjectsTable } from './ui/table.js';
-import { DEFAULT_API_URL, getSyncStatus, loadSyncToken, removeSyncToken, saveSyncToken, syncUsage } from './sync.js';
+import { DEFAULT_API_URL, getDeviceMetadata, getSyncStatus, loadSyncToken, removeSyncToken, saveSyncToken, syncUsage } from './sync.js';
 import { backgroundSyncStatus, startBackgroundSync, stopBackgroundSync } from './background.js';
 
 const program = new Command();
+const packageMetadata = createRequire(import.meta.url)('../package.json') as { version: string };
 
 program
   .name('harness-analyzer')
   .description('Harness Analyzer usage telemetry')
-  .version('0.3.0');
+  .version(packageMetadata.version);
 
 function readHiddenToken(): Promise<string> {
   if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== 'function') {
@@ -63,12 +65,14 @@ function getResult() {
 program
   .command('login')
   .description('Connect this computer with a sync token from your Profile page')
+  .option('--device-name <name>', 'Save a private label for this device')
   .option('--api-url <url>', 'Override the hosted API URL', DEFAULT_API_URL)
   .action(async opts => {
     const token = await readHiddenToken();
     const status = await getSyncStatus({ token, apiUrl: opts.apiUrl });
+    const device = getDeviceMetadata({ deviceName: opts.deviceName });
     saveSyncToken(token);
-    console.log(chalk.green(`Connected as @${status.handle}.`));
+    console.log(chalk.green(`Connected as @${status.handle} on ${device.name}.`));
   });
 
 program
@@ -78,11 +82,12 @@ program
   .option('--dry-run', 'Collect and validate without uploading')
   .option('--json', 'Print the result as JSON')
   .option('--include-history', 'Also upload session prompt history (off by default)')
-  .option('--quiet', 'Suppress successful output; for launchd')
+  .option('--device-name <name>', 'Save a private label for this device')
+  .option('--quiet', 'Suppress successful output; for scheduled jobs')
   .option('--api-url <url>', 'Override the hosted API URL', DEFAULT_API_URL)
   .action(async opts => {
     if (opts.level && !['totals', 'details'].includes(opts.level)) throw new Error('Level must be totals or details.');
-    const result = await syncUsage({ apiUrl: opts.apiUrl, level: opts.level, dryRun: opts.dryRun, includeHistory: opts.includeHistory });
+    const result = await syncUsage({ apiUrl: opts.apiUrl, level: opts.level, dryRun: opts.dryRun, includeHistory: opts.includeHistory, deviceName: opts.deviceName });
     if (opts.json) {
       console.log(JSON.stringify(result, null, 2));
       return;
@@ -113,7 +118,9 @@ program
     const token = loadSyncToken();
     if (!token) throw new Error('Not connected. Run "harness-analyzer login" first.');
     const status = await getSyncStatus({ token, apiUrl: opts.apiUrl });
+    const device = getDeviceMetadata();
     console.log(`@${status.handle} · ${status.visibility} · ${status.snapshot_generated_at || 'never synced'}`);
+    console.log(`Device ${device.name} · ${device.id} · ${device.platform}/${device.architecture}`);
   });
 
 program
