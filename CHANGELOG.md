@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-09-27
+
+### Fixed
+
+- Recalculate GPT-6 and GLM-5.3/4.7 estimates from local transcripts with corrected Codex output token counts.
+
 ## [0.4.2] - 2026-09-27
 
 ### Fixed
@@ -28,7 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support persistent `--device-name` aliases and temporary `HARNESS_ANALYZER_DEVICE_NAME` overrides for server fleets.
 - Show the current device identity in `harness-analyzer status`.
 
-[Unreleased]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/suenot/harness-analyzer-cli/compare/v0.3.0...v0.4.0

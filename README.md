@@ -49,4 +49,4 @@ HARNESS_ANALYZER_DEVICE_NAME=worker-01 harness-analyzer sync --quiet
 
 Use `harness-analyzer sync --dry-run` to inspect totals without making a network request. Existing offline commands remain available: `summary`, `today`, `week`, `month`, `projects`, and `sessions`.
 
-Model names come from local logs. Token usage for a model without a known price is still shown, but its USD estimate is $0 until that model has a rate.
+Model names come from local logs. Token usage for a model without a known price is still shown, but its USD estimate is $0 until that model has a rate. USD figures are estimates, not billing records; subscription charges, service tiers, and long contexts may differ.
