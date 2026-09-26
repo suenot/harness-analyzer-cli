@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-09-27
+
+### Fixed
+
+- Keep model names from local chats even when no matching price is known, instead of replacing them with GLM 5.2.
+- Recollect cached sessions with the corrected model detection.
+
 ## [0.4.1] - 2026-09-26
 
 ### Changed
@@ -21,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support persistent `--device-name` aliases and temporary `HARNESS_ANALYZER_DEVICE_NAME` overrides for server fleets.
 - Show the current device identity in `harness-analyzer status`.
 
-[Unreleased]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/suenot/harness-analyzer-cli/compare/v0.3.0...v0.4.0

@@ -1,6 +1,6 @@
 {
   "name": "harness-analyzer",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Local AI harness usage analytics and secure aggregate profile sync",
   "license": "Unlicense",
   "homepage": "https://harness-analyzer.marketmaker.cc",
