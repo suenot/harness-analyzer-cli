@@ -1,12 +1,12 @@
 {
   "name": "harness-analyzer",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Local AI harness usage analytics and secure aggregate profile sync",
   "license": "Unlicense",
   "homepage": "https://harness-analyzer.marketmaker.cc",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/suenot/claude-usage-stats-cli.git"
+    "url": "git+https://github.com/suenot/harness-analyzer-cli.git"
   },
   "publishConfig": {
     "access": "public"
@@ -39,7 +39,7 @@
     "commander": "^13.1.0"
   },
   "devDependencies": {
-    "@claude-stats/core": "*",
+    "@harness-analyzer/core": "*",
     "@types/node": "^22.0.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.7.0"

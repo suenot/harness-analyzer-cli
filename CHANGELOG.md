@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-26
+
+### Changed
+
+- Renamed the source repository and core workspace import to Harness Analyzer.
+
 ## [0.4.0] - 2026-08-16
 
 ### Added
@@ -15,5 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support persistent `--device-name` aliases and temporary `HARNESS_ANALYZER_DEVICE_NAME` overrides for server fleets.
 - Show the current device identity in `harness-analyzer status`.
 
-[Unreleased]: https://github.com/suenot/claude-usage-stats-cli/compare/v0.4.0...HEAD
-[0.4.0]: https://github.com/suenot/claude-usage-stats-cli/compare/v0.3.0...v0.4.0
+[Unreleased]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/suenot/harness-analyzer-cli/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/suenot/harness-analyzer-cli/compare/v0.3.0...v0.4.0

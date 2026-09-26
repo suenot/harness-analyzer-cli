@@ -2,8 +2,8 @@
 import { Command } from 'commander';
 import { createRequire } from 'node:module';
 import chalk from 'chalk';
-import { collect } from '@claude-stats/core';
-import type { Session } from '@claude-stats/core';
+import { collect } from '@harness-analyzer/core';
+import type { Session } from '@harness-analyzer/core';
 import { createSummaryTable, createSessionsTable, createSourceTable, createProjectsTable } from './ui/table.js';
 import { DEFAULT_API_URL, getDeviceMetadata, getSyncStatus, loadSyncToken, removeSyncToken, saveSyncToken, syncUsage } from './sync.js';
 import { backgroundSyncStatus, startBackgroundSync, stopBackgroundSync } from './background.js';

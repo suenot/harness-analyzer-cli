@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
-import { buildPrivateAnalyticsSnapshot, buildPublicSnapshot, collect, type AnalyticsDeviceMetadata, type CollectorResult, type PrivateAnalyticsSnapshotV1, type PublicSnapshotV1 } from '@claude-stats/core';
+import { buildPrivateAnalyticsSnapshot, buildPublicSnapshot, collect, type AnalyticsDeviceMetadata, type CollectorResult, type PrivateAnalyticsSnapshotV1, type PublicSnapshotV1 } from '@harness-analyzer/core';
 
 export const DEFAULT_API_URL = 'https://harness-analyzer-api.marketmaker.cc/api';
 
